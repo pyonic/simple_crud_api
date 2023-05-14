@@ -83,22 +83,29 @@ const requestHandler = async (req: any, res: any): Promise<HttpResponse> => {
 
         if (!requestBody.data) {
             responseStatus = 404;
-            response = JSON.stringify({ error: 'Data required'});
-        }
-        
-        if (validateUser(requestBody.data)) {
-            const userId: string = crypto.randomUUID();
+            response = JSON.stringify({ error: 'Data field required with user object'});
+        } else if (validateUser(requestBody.data)) {
+            const users = UserDB.getAll();
 
-            const newUser: IUser = {
-                id: userId,
-                ...requestBody.data
+            const userExists = users.find((u) => u.username == requestBody.data.username)
+
+            if (userExists) {
+                responseStatus = 400;
+                response = JSON.stringify({ error: 'User with this username already exists'});
+            } else {
+                const userId: string = crypto.randomUUID();
+    
+                const newUser: IUser = {
+                    id: userId,
+                    ...requestBody.data
+                }
+                
+                UserDB.insertUser(newUser);
+    
+                responseStatus = 201;
+    
+                response = UserDB.getSerializedUsers();
             }
-            
-            UserDB.insertUser(newUser);
-
-            responseStatus = 201;
-
-            response = UserDB.getSerializedUsers();
         } else {
             responseStatus = 400;
             response = JSON.stringify({
@@ -139,7 +146,7 @@ const app = (users: Array<any> = []): http.Server => {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'application/json');
         
-        console.log(`\nServer started ${ process.pid }`);
+        console.log(`\nServer processing request with, process pid: ${ process.pid }`);
         try {
             const data: HttpResponse = await requestHandler(req, res);
 
