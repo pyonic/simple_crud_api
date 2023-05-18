@@ -6,6 +6,8 @@
 
 > Self score calculations are in the borrom of Readme 
 
+> PORT can be set trough .env file PORT param
+
 ## Instalation dependencies
 NodeJS required version *18 LTS*
 ```
